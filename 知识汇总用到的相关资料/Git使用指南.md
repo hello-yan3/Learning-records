@@ -302,5 +302,5 @@ git branch -D <branch-name>   // 删除<branch-name>分支
 ![19](.\Git学习指南\图片\19.png)
 
 ##### 变基操作
-
+ 
 ![20](.\Git学习指南\图片\20.png)
