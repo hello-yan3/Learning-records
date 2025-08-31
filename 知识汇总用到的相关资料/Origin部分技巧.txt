@@ -1,0 +1,36 @@
+双y轴
+https://www.bilibili.com/video/BV1Qc411m7Gj/
+
+拟合
+https://www.bilibili.com/video/BV1qQ4y1S7zF/
+https://www.bilibili.com/video/BV1mF4m1j7Lp/
+
+
+https://blog.csdn.net/weixin_43891208/article/details/106543500
+散点落在图像边框
+
+插入局部子图
+https://www.bilibili.com/video/BV1Jr421g7ah/
+
+Origin输出图
+https://www.bilibili.com/video/BV1UG411Q7oj/
+
+
+页面：70*55 图纸：50*45 上边距2 左边距10
+字体默认8 Times，图例及其他文字可以设置为7.5(7/8)都可以
+抗锯齿，图例去边框，轴线全部向内，宽度设为0.5，无网格
+线条0.75 放热率短划线
+配色组 深蓝 浅蓝 深红 浅红 采用划线
+五孔 方块（实心/空心） 七孔 三角（实心/空心）
+方框/圆等图标大小，参照已作图
+
+
+绘图设置：
+1. 字体：time news ronma
+（坐标轴，坐标轴度量，图例）
+2. 字号设置/图片大小设置/页边距设置
+3. 坐标轴设置（其实结束范围）
+4. 坐标轴/数字/单位/图例检查，文本没问题
+
+
+
