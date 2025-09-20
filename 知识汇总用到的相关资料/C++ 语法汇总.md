@@ -272,7 +272,60 @@ if (static_cast<int>(result) == 0) { ... }  // 合法
 
 #### 6.4 数据基本类型的转换
 
-基本等同于**[C语言](.\C语言 语法汇总)**。
+**参考：[static_cast用法1](https://blog.csdn.net/zhouwei1221q/article/details/44978361)、[static_cast用法2](https://www.cnblogs.com/QG-whz/p/4509710.html)**：
+
+**C语言强制转换语法尽量不要在C++中使用，使用C++中类型转换三个关键字。**基本用法：`static_cast < type-id > ( expression )`
+
+| 转换类型           | 适用场景                         | 安全性             | 检查时机 |
+| ------------------ | -------------------------------- | ------------------ | -------- |
+| `static_cast`      | 基本类型、非多态类的上下转换     | 依赖开发者判断     | 编译期   |
+| `dynamic_cast`     | 多态类的向下转换（需虚函数）     | 安全（运行时检查） | 运行期   |
+| `reinterpret_cast` | 不相关类型、底层二进制数据重解释 | 极不安全           | 编译期   |
+
+**1） `static_cast`（静态转换）**
+用于基本数据类型、具有继承关系的类之间的转换，编译器隐式执行的任何类型转换，`void*` 与其他指针转换，以及非多态类型的转换。
+
+**2）`dynamic_cast`（动态转换）**
+仅用于**多态类**（含虚函数的类）之间的向下转换或交叉转换，提供运行时类型检查。
+
+**3）`reinterpret_cast`（重新解释转换）**
+最 “强制” 的转换，直接重新解释底层二进制数据，忽略类型安全性。用于**完全不相关的类型之间的转换**，如指针与整数互转、不同类型指针互转。
+
+```C++
+/******** 1. 基本类型转换 ********/
+#include <iostream>
+using namespace std;
+ 
+int main()
+{
+	char a = 'c';   // a = 'c'
+	int b = static_cast<int>(a);     // b = 99    // 基本数据类型转换
+	char c = static_cast<char>(b);   // c = 'c'   // 基本数据类型转换
+    
+	char* pa = &a;        // char* pa = &'c' = 003F00060
+	int* pb = (int*)pa;   // int* pb = 003F00060    // C语言风格，不推荐使用
+	// int *pb = static_cast<int*>(pa);  // char* → int* error
+	// pa = static_cast<char*>(pb);      // int* → char* error
+	int *pb = reinterpret_cast<int*>(pa);  // char* → int*    // 不同类型指针互转
+	pa = reinterpret_cast<char*>(pb);      // int* → char*    // 不同类型指针互转
+    
+	char *pc = (char*)pb; // char* → char* pc = c
+	// char *pc = static_cast<char*>(pb); // int* → char* error
+	char *pc = reinterpret_cast<char*>(pb);      // int* → char*     
+    
+	// static_cast可以把任何类型的表达式转换成void类型。
+    void *pd = static_cast<void*>(pa);    // char* → void* pd = 003F00060
+    // void类型可以转换为任何类型
+	int *pe = static_cast<int*>(pd);      // void* → int* pe = 003F00060
+	char *pf = static_cast<char*>(pd);    // void* → char* pf = c
+
+    int a = 0x12345678;
+    int* ptr = &a;  
+    long long addr = reinterpret_cast<long long>(ptr); // 指针→整数（存储地址）  // 不相关类型转换
+    
+	return 0;
+}
+```
 
 
 
@@ -3121,6 +3174,65 @@ C++需要引用库 **\<ctime>** ，此外基本等同于C语言，详见**[C语�
 
 注意：C语言也有这两部分，不过差别较大。
 
+**异常处理：**
+
+在 C++ 中，`try{} catch{}` 是用于异常处理的机制，用于捕获和处理程序运行时可能出现的错误或异常情况，避免程序直接崩溃。
+其基本结构如下：
+
+```c++
+try {
+    // 可能会抛出异常的代码块
+    // 例如：除以零、数组越界、内存分配失败等操作
+}
+catch (异常类型1 参数名) {
+    // 当 try 块中抛出异常类型1的异常时，执行这里的处理代码
+}
+catch (异常类型2 参数名) {
+    // 当 try 块中抛出异常类型2的异常时，执行这里的处理代码
+}
+// 可以有多个 catch 块，捕获不同类型的异常
+catch (...) {
+    // 捕获所有未被前面 catch 块处理的异常（通配符）
+}
+```
+
+**工作流程**：
+
+1. 程序执行 `try` 块中的代码。
+2. 如果在 `try` 块中发生异常（通过 `throw` 语句主动抛出，或某些标准库函数自动抛出），程序会立即跳出 `try` 块，寻找匹配的 `catch` 块。
+3. 找到匹配的 `catch` 块后，执行其中的异常处理代码。
+4. 如果没有找到匹配的 `catch` 块，程序会终止运行。
+
+**示例：**
+
+```C++
+#include <iostream>
+using namespace std;
+
+int main() {
+    try {
+        int a = 10;
+        int b = 0;
+        
+        if (b == 0) {
+            throw "除数不能为零"; // 抛出异常
+        }
+        
+        int result = a / b;
+        cout << "结果: " << result << endl;
+    }
+    catch (const char* msg) { // 捕获字符串类型的异常
+        cout << "捕获到异常: " << msg << endl;
+    }
+    
+    return 0;
+}
+```
+
+在这个例子中，当 `b` 为 0 时，我们主动抛出一个字符串异常，随后被 `catch` 块捕获并处理，程序不会崩溃，而是输出异常信息后继续执行。
+
+`try{} catch{}` 机制让错误处理代码与正常业务代码分离，使程序更健壮、可读性更好。C++ 标准库也定义了一些异常类型（如 `std::out_of_range`、`std::bad_alloc` 等），可以直接使用。
+
 
 
 ## 二、C++ 类与对象
@@ -3727,11 +3839,68 @@ d: 100
 一般 类 内部成员函数，使用**`const classname &obj`**  值传递；
 其他需要用到类的函数 (如：友元函数)，使用**`classname obj `** 值传递即可；使用**`const`**会发生错误。
 
-#### 5.2 补充：移动构造函数：
+#### 5.2 补充：右值引用 与 移动构造函数：
 
-用于将一个对象的资源（如动态内存、文件句柄等）“转移” 给另一个对象，而不是 “拷贝” 资源，从而提高性能（尤其是处理大对象时）。
-
+用于将一个对象的资源（如动态内存、文件句柄等）“转移” 给另一个对象，而不是 “拷贝” 资源，从而提高性能（尤其是处理大对象时）
 它的核心思想是：对于即将被销毁的临时对象（右值），直接 “抢走” 它的资源，避免无意义的拷贝。
+
+> 右值 = **临时对象**（比如函数返回值、字面量、强制转换结果）
+> 左值 = 有名字的变量（比如 `int a = 1;` 中的 `a`） 
+> 使用 **`std::move()` **强制转换左值为右值：
+
+**1\. 右值引用：**
+
+```C++
+#include <vector>
+#include <string>
+
+// 形参为右值引用
+void printMessage(std::string &&message) {
+    // 可以直接使用 message，此时操作的是原右值的资源
+    std::cout << message << std::endl;
+}
+
+int main() {
+    std::string str = "普通左值";
+    
+    // 正确：传递右值（临时对象）
+    printMessage(std::string("临时对象"));  // 临时对象是右值
+    printMessage("字符串字面量");            // 字面量是右值
+    
+    // 错误：不能直接传递左值（有名字的变量）
+    // printMessage(str);  // 编译报错：无法将左值绑定到右值引用
+    
+    // 正确：通过 std::move() 将左值强制转换为右值引用
+    printMessage(std::move(str));  // 此时 str 的资源会被“移动”，之后尽量不再使用 str
+    
+    /*******************************************************************************/
+    
+    std::vector<std::string> vec;
+
+    std::string bigStr = "这是一个很长很长很长的字符串，包含1000个字符...";
+    // 假设这个字符串很大，有1KB内存
+
+    // ❌ 拷贝：会复制整个字符串内容 → 慢
+    vec.push_back(bigStr);
+
+    // ✅ 移动：直接“偷走” bigStr 的内存 → 快！
+    vec.push_back(std::move(bigStr)); // 👈 bigStr 现在变为空字符串！
+    vec.push_back("这是一个很长很长很长的字符串，包含1000个字符..."); // 直接传递右值字符串
+
+    std::cout << "bigStr 长度: " << bigStr.size() << std::endl; // 输出：0
+    std::cout << "vec[0] 长度: " << vec[0].size() << std::endl; // 输出：1000
+
+    return 0;
+}
+```
+
+**性能比较：**
+
+- `void printMessage(const string&)`：不拷贝，但**不能修改**，也不能“偷资源”
+- `void printMessage(string message)`：**总是拷贝**，大字符串时性能差
+-  `void printMessage(string&& message)`：**零拷贝 + 可移动**，性能最优，语义清晰
+
+**2\. 移动构造函数：**
 
 ```C++
 #include <iostream>
@@ -3739,7 +3908,7 @@ d: 100
 
 // 一个简单的字符串类（管理动态内存）
 class MyString {
-private:
+public:
     char* str; // 存储字符串的动态内存
 
 public:
@@ -3762,6 +3931,32 @@ public:
         str = other.str; // 直接"抢"走对方的内存
         other.str = nullptr; // 原对象的指针置空（避免被销毁）
         std::cout << "移动字符串（直接拿走了资源）\n";
+    }
+    
+    // 👇 拷贝赋值：深拷贝整个 vector（慢）
+    MyString& operator=(const MyString& other) {
+		    // 第一步：释放当前内存（避免泄漏）
+    		delete[] str;	
+
+				// 第二步：分配新内存并复制内容
+        str = new char[strlen(other.str) + 1]; // 分配内存
+        strcpy(str, other.str);
+
+        std::cout << "拷贝赋值\n";
+        return *this;
+    }
+
+    // 👇 移动赋值：偷走 vector 内部的堆内存（快！）
+    MyString& operator=(MyString&& other) noexcept {
+      // 释放自己当前持有的内存（避免泄漏）
+      delete[] str;
+  
+      // 接管 other 的资源
+      str = other.str;
+      other.str = nullptr; // 👈 置空，防止 other 析构时重复释放
+      
+      std::cout << "移动赋值\n";
+      return *this;
     }
 
     // 析构函数：释放内存
@@ -3791,31 +3986,50 @@ MyString createTempString() {
 }
 
 int main() {
-    // 场景1：拷贝构造（复制内容）
     {
+    // 场景1：拷贝构造（复制内容）
     std::cout << "=== 拷贝构造示例 ===\n";
     MyString s1("原始字符串");
     MyString s2 = s1; // 用s1拷贝构造s2（复制内容）
     s1.print(); // s1仍然有效
     s2.print(); // s2是复制的新内容
     }
-
-    // 场景2：移动构造（转移资源）
+    
     {
+    // 场景2：移动构造（转移资源）
     std::cout << "\n=== 移动构造示例 ===\n";
     MyString s3 = createTempString(); // 接收临时对象（触发移动构造）
     s3.print(); // s3拿到了临时对象的资源
     }
-
-    // 场景3：强制移动一个左值
+    
     {
+    // 场景3：强制移动一个左值
     std::cout << "\n=== 强制移动示例 ===\n";
     MyString s4("要被移动的字符串");
     MyString s5 = std::move(s4); // 强制移动s4到s5
     s4.print(); // s4变成空的（资源已被移走）
     s5.print(); // s5拿到了s4的资源
     }
-
+    
+    {
+    std::cout << "\n=== 拷贝赋值示例 ===\n";
+    MyString s6("要被赋值的字符串");
+    MyString s7("原始字符串");
+    s7 = s6; // 拷贝赋值
+    s6.print();
+    s7.print();
+    }
+    
+    
+    {
+    std::cout << "\n=== 移动赋值示例 ===\n";
+    MyString s8("要被移动的字符串");
+    MyString s9("原始字符串");
+    s9 = std::move(s8); // 移动赋值
+    s8.print(); // 空
+    s9.print();
+    }
+    
     return 0;
 }
 
@@ -3830,8 +4044,6 @@ int main() {
 
 === 移动构造示例 ===
 创建字符串: 我是临时字符串（分配了新内存）
-移动字符串（直接拿走了资源）
-销毁空字符串（没有内存需要释放）
 内容: 我是临时字符串
 销毁字符串: 我是临时字符串（释放了内存）
 
@@ -3840,8 +4052,26 @@ int main() {
 移动字符串（直接拿走了资源）
 内容: （空）
 内容: 要被移动的字符串
-销毁空字符串（没有内存需要释放）
 销毁字符串: 要被移动的字符串（释放了内存）
+销毁空字符串（没有内存需要释放）
+
+=== 拷贝赋值示例 ===
+创建字符串: 要被赋值的字符串（分配了新内存）
+创建字符串: 原始字符串（分配了新内存）
+拷贝赋值
+内容: 要被赋值的字符串
+内容: 要被赋值的字符串
+销毁字符串: 要被赋值的字符串（释放了内存）
+销毁字符串: 要被赋值的字符串（释放了内存）
+
+=== 移动赋值示例 ===
+创建字符串: 要被移动的字符串（分配了新内存）
+创建字符串: 原始字符串（分配了新内存）
+移动赋值
+内容: （空）
+内容: 要被移动的字符串
+销毁字符串: 要被移动的字符串（释放了内存）
+销毁空字符串（没有内存需要释放）
 */
 ```
 
@@ -4264,6 +4494,9 @@ int main()
 静态成员变量是先于类的对象而存在，在类的所有对象中是共享的。
 静态成员的定义**不能放置**在**类的定义**中，但是可以**在类的外部**通过使用范围解析运算符 **::** 来重新**定义**静态变量从而对它进行初始化
 静态成员变量在类中仅仅是声明，没有定义，需要要在**类的外面定义**，否则就会报错；
+此外，静态成员变量的定义必须放在**类外部的全局作用域**，不能放在 main() 或其他**函数内部**。
+
+**补充：**C++17 及以上支持 **`inline` 静态成员**，则无需在类外重复定义：
 
 ```C++
 #include <iostream>
@@ -4280,6 +4513,9 @@ class Box
       // 构造函数定义
       Box(double l=2.0, double b=2.0, double h=2.0);
       double Volume();
+    
+      // C++17 起支持类内初始化+定义
+      inline static double x = 10.0; 
 };
 // 定义成员函数
 Box::Box(double l, double b, double h)
@@ -4431,6 +4667,7 @@ private:
     const static double con_sta;     // 在类的外部定义并初始化，初始化后为常值；与 static const double con_sta; 相同
     // const static double con_sta = 20.0;  // ERROR!
     const static int con_sta2 = 30;  // 正确！只有const static int成员可以直接赋值！但不推荐这种用法！
+    const static inline double con_sta3; // 正确，inline静态成员可以类内部定义，C++17以上支持   
 public:
     Test(int &a , int b);
     static void print();    //静态成员函数
@@ -5163,42 +5400,9 @@ public:
 >7、友元不是成员函数，只有成员函数才可以是虚拟的，因此友元不能是虚拟函数。但可以通过让友元函数调用虚拟成员函数来解决友元的虚拟问题。
 >8、析构函数应当是虚函数，将调用相应对象类型的析构函数，因此，如果指针指向的是子类对象，将调用子类的析构函数，然后自动调用基类的析构函数。
 
-#### 补充知识点：关于基类 派生类之间的 转换（static\_cast用法）
-
-**参考：[static_cast用法1](https://blog.csdn.net/zhouwei1221q/article/details/44978361)、[static_cast用法2](https://www.cnblogs.com/QG-whz/p/4509710.html)**
-
-**static\_cast是一个强制类型转换操作符。**编译器隐式执行的任何类型转换都可以由static\_cast显式完成；
-用法：static\_cast < type-id > ( expression )
-**此外：C语言强制转换语法尽量不要在C++中使用，使用C++中类型转换两个关键字。**
+#### 补充知识点：关于基类 派生类之间的 转换
 
 ```C++
-/******** 1. 基本类型转换 ********/
-#include <iostream>
-using namespace std;
- 
-int main()
-{
-	char a = 'c';   // a = c
-	int b = static_cast<int>(a);     // b = 99
-	char c = static_cast<char>(b);   // c = a
-    
-	char* pa = &a;        // char* pa = c
-	int* pb = (int*)pa;   // int* pb = 003F00060
-	// int *pb = static_cast<int*>(pa);  // char* → int* error
-	// pa = static_cast<char*>(pb);      // int* → char* error
-    
-	char *pc = (char*)pb; // char* → char* pc = c
-	// char *pc = static_cast<char*>(pb); // int* → char* error
-    
-	// static_cast可以把任何类型的表达式转换成void类型。
-    void *pd = static_cast<void*>(pa);    // char* → void* pd = 003F00060
-    // void类型可以转换为任何类型
-	int *pe = static_cast<int*>(pd);      // void* → int* pe = 003F00060
-	char *pf = static_cast<char*>(pd);    // void* → char* pf = c
-
-	return 0;
-}
-
 /******** 2. 类层次结构中基类与子类指针或引用之间的转换 ********/
 /******** 例1 ********/
 #include <iostream>
